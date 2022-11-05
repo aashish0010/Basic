@@ -1,0 +1,14 @@
+﻿@model Basic.Domain.Entity.ChatBox
+
+
+
+@foreach(var data in ViewBag.number)
+{
+    <p>@data</p>
+}
+
+@using(Html.BeginForm("Index","Server",FormMethod.Post))
+{
+    @Html.TextAreaFor(x=>x.Message)
+    <input type="submit" value="Send Message" />
+}
