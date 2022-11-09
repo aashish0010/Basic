@@ -3,8 +3,12 @@ using Basic.Application.Service;
 using Basic.Domain.Entity;
 using Basic.Domain.Interface;
 using Basic.Infrastracture.Dapper;
+using Basic.Infrastracture.Entity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using System.Configuration;
 using System.Text;
 using System.Text.Json.Serialization;
 
@@ -22,15 +26,43 @@ builder.Services.AddControllers()
                        = JsonIgnoreCondition.WhenWritingNull;
 
     });
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+DbConn.ConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(DbConn.ConnectionString));
+
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(option =>
+{
+    option.SwaggerDoc("v1", new OpenApiInfo { Title = "Demo API", Version = "v1" });
+    option.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        In = ParameterLocation.Header,
+        Description = "Please enter a valid token",
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        BearerFormat = "JWT",
+        Scheme = "Bearer"
+    });
+    option.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type=ReferenceType.SecurityScheme,
+                    Id="Bearer"
+                }
+            },
+            new string[]{}
+        }
+    });
+});
 builder.Services.AddCors();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.Configure<EmailConfiguration>(builder.Configuration.GetSection("EmailSettings"));
-DbConn.ConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
 
 builder.Services.AddAuthentication(x =>
 {
@@ -74,6 +106,24 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.Use(async (context, next) =>
+{
+    try
+    {
+        
+        await next.Invoke();
+    }
+    catch (Exception ex)
+    {
+        var res = new
+        {
+            code = context.Response.StatusCode,
+            message = ex.Message,
+        };
+        await context.Response.WriteAsJsonAsync(res);
+    }
+});
 app.UseCors(x => x
             .AllowAnyOrigin()
             .AllowAnyMethod()
