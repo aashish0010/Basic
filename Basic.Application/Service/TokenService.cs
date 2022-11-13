@@ -21,8 +21,8 @@ namespace Basic.Application.Service
 
         public Tokens GenerateRefreshToken(string userName, string email, string role, string isadmin)
         {
-            NormalFunctions nf = new NormalFunctions(_configuration);
-            return GenerateJWTTokens(nf.Decrypt(userName), nf.Decrypt(email), nf.Decrypt(role), nf.Decrypt(isadmin));
+
+            return GenerateJWTTokens(NormalFunctions.Decrypt(userName), NormalFunctions.Decrypt(email), NormalFunctions.Decrypt(role), NormalFunctions.Decrypt(isadmin));
         }
 
         public Tokens GenerateToken(string userName, string email, string role, string isadmin)
@@ -53,16 +53,10 @@ namespace Basic.Application.Service
                 throw new SecurityTokenException("Invalid token");
             }
             return principal;
-
-
-
-
-
         }
         public Tokens GenerateJWTTokens(string userName, string email, string role, string isadmin)
         {
 
-            NormalFunctions nf = new NormalFunctions(_configuration);
 
             var tokenHandler = new JwtSecurityTokenHandler();
             var tokenKey = Encoding.UTF8.GetBytes(_configuration["JWT:Key"]);
@@ -71,12 +65,12 @@ namespace Basic.Application.Service
             {
                 Subject = new ClaimsIdentity(new Claim[]
               {
-                 new Claim(ClaimTypes.Name,nf.encrypt(userName)),
-                 new Claim("Email",nf.encrypt(email)),
-                 new Claim("Role",nf.encrypt(role)),
-                 new Claim("Isadmin",nf.encrypt(isadmin))
+                 new Claim(ClaimTypes.Name,NormalFunctions.encrypt(userName)),
+                 new Claim("Email",NormalFunctions.encrypt(email)),
+                 new Claim("Role",NormalFunctions.encrypt(role)),
+                 new Claim("Isadmin",NormalFunctions.encrypt(isadmin))
               }),
-                Expires = DateTime.Now.AddMinutes(1),
+                Expires = DateTime.Now.AddMinutes(100),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(tokenKey), SecurityAlgorithms.HmacSha256Signature)
             };
             var token = tokenHandler.CreateToken(tokenDescriptor);
@@ -105,14 +99,32 @@ namespace Basic.Application.Service
         public string GetSpecificTokenData(string token, string value)
         {
             Uservalidate user = new Uservalidate();
-            NormalFunctions nf = new NormalFunctions(_configuration);
+
             var handler = new JwtSecurityTokenHandler();
             var jsonToken = handler.ReadToken(token);
             var tokenS = jsonToken as JwtSecurityToken;
             var jti = tokenS.Claims.First(claim => claim.Type == value).Value;
-            return nf.Decrypt(jti);
+            return NormalFunctions.Decrypt(jti);
         }
 
+        public bool CheckTokenIsValid(string token)
+        {
+            var tokenTicks = GetTokenExpirationTime(token);
+            var tokenDate = DateTimeOffset.FromUnixTimeSeconds(tokenTicks).UtcDateTime;
 
+            var now = DateTime.Now.ToUniversalTime();
+
+            var valid = tokenDate >= now;
+
+            return valid;
+        }
+        public static long GetTokenExpirationTime(string token)
+        {
+            var handler = new JwtSecurityTokenHandler();
+            var jwtSecurityToken = handler.ReadJwtToken(token);
+            var tokenExp = jwtSecurityToken.Claims.First(claim => claim.Type.Equals("exp")).Value;
+            var ticks = long.Parse(tokenExp);
+            return ticks;
+        }
     }
 }

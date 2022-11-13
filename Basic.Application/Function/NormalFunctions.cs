@@ -1,21 +1,15 @@
-﻿using Microsoft.Extensions.Configuration;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
 
 namespace Basic.Application.Function
 {
-    public class NormalFunctions
+    public static class NormalFunctions
     {
-        private readonly IConfiguration _configuration;
 
-        public NormalFunctions(IConfiguration configuration)
-        {
-            _configuration = configuration;
-        }
-        public string encrypt(string encryptString)
+        public static string encrypt(string encryptString)
         {
 
-            string EncryptionKey = _configuration.GetSection("key").Value;
+            string EncryptionKey = "A53639FF6C1525AE31F99ADF3A98E";
             byte[] clearBytes = Encoding.Unicode.GetBytes(encryptString);
             using (Aes encryptor = Aes.Create())
             {
@@ -37,9 +31,9 @@ namespace Basic.Application.Function
             return encryptString;
         }
 
-        public string Decrypt(string cipherText)
+        public static string Decrypt(string cipherText)
         {
-            var EncryptionKey = _configuration.GetSection("key").Value;
+            var EncryptionKey = "A53639FF6C1525AE31F99ADF3A98E";
             cipherText = cipherText.Replace(" ", "+");
             byte[] cipherBytes = Convert.FromBase64String(cipherText);
             using (Aes encryptor = Aes.Create())
@@ -60,6 +54,14 @@ namespace Basic.Application.Function
                 }
             }
             return cipherText;
+        }
+
+        public static string RandomString(int length)
+        {
+            Random random = new Random();
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            return new string(Enumerable.Repeat(chars, length)
+                .Select(s => s[random.Next(s.Length)]).ToArray());
         }
     }
 

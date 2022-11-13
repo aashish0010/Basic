@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Basic.Domain.Entity;
+using Microsoft.EntityFrameworkCore;
 
 namespace Basic.Infrastracture.Entity
 {
@@ -8,5 +9,8 @@ namespace Basic.Infrastracture.Entity
         {
 
         }
+        public DbSet<ForgetPassword> EmailRequest { get; set; }
+        public DbSet<Config> Config { get; set; }
+
     }
 }

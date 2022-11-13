@@ -7,6 +7,8 @@ namespace Basic.Application.Service
 {
     public class LoginRegisterService : ILoginRegisterService
     {
+
+
         public async Task<IEnumerable<Uservalidate>> Login(LoginRequest login)
         {
             var uval = new Uservalidate();
@@ -15,7 +17,7 @@ namespace Basic.Application.Service
             param.Add("@username", login.UserName);
             param.Add("@password", login.Password);
             param.Add("@flag", "Login");
-            var loginval = await DbHelper.RunQueryWithModel<Uservalidate>(sql, "y", param);
+            var loginval = await DbHelper.RunQueryWithModel<Uservalidate>(sql, param, "y");
             return loginval;
 
         }
@@ -33,7 +35,7 @@ namespace Basic.Application.Service
             param.Add("@lastname", reg.LastName);
             param.Add("@phonenum", reg.PhoneNumber);
             param.Add("@flag", "Register");
-            var regval = await DbHelper.RunQueryWithModel<CommonResponse>(sql, "y", param);
+            var regval = await DbHelper.RunQueryWithModel<CommonResponse>(sql, param, "y");
             return regval;
         }
 

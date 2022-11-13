@@ -13,7 +13,7 @@ namespace Basic.Infrastracture.Dapper
             return conn;
 
         }
-        public static async Task<IEnumerable<T>> RunQueryWithModel<T>(string sql, string isproc = null, object param = null)
+        public static async Task<IEnumerable<T>> RunQueryWithModel<T>(string sql, object param = null, string isproc = null)
         {
 
             using (var con = Conn())
@@ -33,7 +33,7 @@ namespace Basic.Infrastracture.Dapper
             }
 
         }
-        public static async Task<IEnumerable<dynamic>> RunQueryDynamically(string sql, string isproc = null, object param = null)
+        public static async Task<IEnumerable<dynamic>> RunQueryDynamically(string sql, object param = null, string isproc = null)
         {
             using (var con = Conn())
             {
@@ -64,6 +64,24 @@ namespace Basic.Infrastracture.Dapper
                     con.Execute(sql, param);
                 }
 
+
+            }
+        }
+        public static IEnumerable<dynamic> RunQueryDynamicallywithoutasync(string sql, object param = null, string isproc = null)
+        {
+            using (var con = Conn())
+            {
+
+                if (isproc == "y")
+                {
+                    var conn = con.Query(sql, param, commandType: CommandType.StoredProcedure);
+                    return conn;
+                }
+                else
+                {
+                    var conn = con.Query(sql, param);
+                    return conn;
+                }
 
             }
         }

@@ -1,18 +1,23 @@
 ﻿using Basic.Application.Service;
 using Basic.Domain.Interface;
-using Microsoft.Extensions.Configuration;
+using Basic.Infrastracture.Entity;
 
 namespace Basic.Application
 {
     public class UnitOfWork : IUnitOfWork
     {
-        private readonly IConfiguration _configuration;
-        public UnitOfWork(IConfiguration configuration)
+        private readonly ApplicationDbContext _context;
+        public UnitOfWork(ApplicationDbContext context)
         {
-            _configuration = configuration;
+            _context = context;
         }
+
         public LoginRegisterService LoginRegisterService => new LoginRegisterService();
 
-        public DashBoardService dashBoardService => new DashBoardService(_configuration);
+        public DashBoardService dashBoardService => new DashBoardService();
+
+        public ForgetPasswordService ForgetPasswordService => new ForgetPasswordService(_context);
+
+        public EmailService emailService => new EmailService();
     }
 }

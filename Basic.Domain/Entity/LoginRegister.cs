@@ -20,7 +20,7 @@
         public string? MiddleName { get; set; }
         public string? LastName { get; set; }
         public string? PhoneNumber { get; set; }
-        public string? Flag { get; set; }
+        //public string? Flag { get; set; }
         //public string? Role { get; set; }
         //public string? IsAdmin { get; set; }
     }

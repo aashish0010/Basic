@@ -6,5 +6,6 @@ namespace Basic.Domain.Interface
     {
         Task<IEnumerable<Uservalidate>> Login(LoginRequest login);
         Task<IEnumerable<CommonResponse>> Register(Register Register);
+
     }
 }

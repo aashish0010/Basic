@@ -1,5 +1,6 @@
 ﻿using Basic.Domain.Entity;
 using Basic.Domain.Interface;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Basic.Api.Controllers
@@ -23,14 +24,14 @@ namespace Basic.Api.Controllers
             var data = await _unitOfWork.LoginRegisterService.Login(login);
             if ((data.Count() != 0) && (data.FirstOrDefault().Code == 0))
             {
-                var token = _tokenService.GenerateToken(data.FirstOrDefault().Username, data.FirstOrDefault().Email, data.FirstOrDefault().Role, data.FirstOrDefault().Isactive);
+                Tokens token = _tokenService.GenerateToken(data.FirstOrDefault().Username, data.FirstOrDefault().Email, data.FirstOrDefault().Role, data.FirstOrDefault().Isactive);
                 return Ok(token);
             }
 
             return Unauthorized(new CommonResponse
             {
                 Code = 401,
-                Message = "Unauthorize User"
+                Message = data.FirstOrDefault().Message
             });
 
         }
@@ -41,58 +42,27 @@ namespace Basic.Api.Controllers
             var data = await _unitOfWork.LoginRegisterService.Register(Register);
             return Ok(data.FirstOrDefault());
         }
-        [Route("~/api/user/refreshtoken")]
-        [HttpPost]
-        public IActionResult RefreshToken()
-        {
-            var re = Request;
-            var token = re.Headers["token"].FirstOrDefault();
-            if (token == null)
-            {
-                return BadRequest(new CommonResponse
-                {
-                    Code = 400,
-                    Message = "token not found"
-                });
-            }
-            var tokendata = _tokenService.GetPrincipalFromExpiredToken(token);
-            if (tokendata != null)
-            {
-                string user = tokendata.Identity.Name;
-                string role = tokendata.FindFirst("Role").Value;
-
-                if (!string.IsNullOrEmpty(user) && !string.IsNullOrEmpty(role))
-                {
-                    var reftok = _tokenService.GenerateRefreshToken(user, tokendata.FindFirst("Email")?.Value, role, tokendata.FindFirst("Isadmin")?.Value);
-                    return Ok(reftok);
-                }
-                return Unauthorized(new CommonResponse
-                {
-                    Code = 401,
-                    Message = "Unauthorize User"
-                });
-            }
-            else
-            {
-                return BadRequest(new CommonResponse
-                {
-                    Code = 400,
-                    Message = "Invalid Token"
-                });
-            }
-
-
-
-        }
-
-        [Route("~/api/user/gettokenvalues")]
 
         [HttpGet]
+        public Tokens RefreshToken(string token)
+        {
+            var tokendata = _tokenService.GetPrincipalFromExpiredToken(token);
+            string user = tokendata.Identity.Name;
+            string role = tokendata.FindFirst("Role").Value;
+            Tokens reftok = _tokenService.GenerateRefreshToken(user, tokendata.FindFirst("Email")?.Value, role, tokendata.FindFirst("Isadmin")?.Value);
+            return reftok;
+        }
+
+        [Route("~/api/user/refreshtoken")]
+
+        [HttpGet]
+        [Authorize]
         public IActionResult GetTokenValues(string roles)
         {
+            string token = string.Empty;
             var re = Request;
 
-            var token = re.Headers["Authorization"].FirstOrDefault().Split(' ')[1];
+            token = re.Headers["Authorization"].FirstOrDefault().Split(' ')[1];
             if (token == null)
             {
                 return BadRequest(new CommonResponse
@@ -101,8 +71,36 @@ namespace Basic.Api.Controllers
                     Message = "token not found"
                 });
             }
-            return Ok(_tokenService.GetSpecificTokenData(token, roles));
+
+            if (_tokenService.CheckTokenIsValid(token) == false)
+            {
+                var newtoken = RefreshToken(token);
+                token = newtoken.Token;
+            }
+
+            dynamic obj = new
+            {
+                CurrentUser = _tokenService.GetSpecificTokenData(token, roles)
+            };
+            return Ok(obj);
 
         }
+
+        [Route("~/api/user/userdetail")]
+        [HttpGet]
+        public async Task<IActionResult> GenerateForgetToken(string email)
+        {
+            await _unitOfWork.ForgetPasswordService.GenerateForgetProcessid(email);
+            return Ok();
+        }
+
+        [Route("~/api/user/passwordchange")]
+        [HttpGet]
+        public async Task<IActionResult> PasswordChange(string email, string processid)
+        {
+            await _unitOfWork.ForgetPasswordService.VerifyUser(email, processid);
+            return Ok();
+        }
+
     }
 }

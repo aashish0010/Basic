@@ -1,24 +1,20 @@
-﻿using Basic.Domain.Entity;
+﻿using Basic.Application.Function;
+using Basic.Domain.Entity;
 using Basic.Domain.Interface;
 using MailKit.Net.Smtp;
 using MailKit.Security;
-using Microsoft.Extensions.Options;
 using MimeKit;
 namespace Basic.Application.Service
 {
     public class EmailService : IEmailService
     {
-        EmailConfiguration _emailSettings;
-        public EmailService(IOptions<EmailConfiguration> options)
-        {
-            _emailSettings = options.Value;
-        }
+
         public async Task<bool> SendEmail(EmailMessage email)
         {
             try
             {
                 MimeMessage mime = new MimeMessage();
-                MailboxAddress emailFrom = new MailboxAddress(_emailSettings.Name, _emailSettings.EmailId);
+                MailboxAddress emailFrom = new MailboxAddress(CommonConfig.ConfigValue("emailname")/*  _emailSettings.Name*/, CommonConfig.ConfigValue("email")/* _emailSettings.EmailId*/);
                 mime.From.Add(emailFrom);
                 MailboxAddress emailTo = new MailboxAddress(email.EmailToName, email.EmailToId);
                 mime.To.Add(emailTo);
@@ -27,8 +23,8 @@ namespace Basic.Application.Service
                 emailBodyBuilder.HtmlBody = email.EmailBody;
                 mime.Body = emailBodyBuilder.ToMessageBody();
                 SmtpClient smtpClient = new SmtpClient();
-                smtpClient.Connect(_emailSettings.Host, _emailSettings.Port, SecureSocketOptions.Auto);
-                smtpClient.Authenticate(_emailSettings.EmailId, _emailSettings.Password);
+                smtpClient.Connect(CommonConfig.ConfigValue("emailhost"), Convert.ToInt16(CommonConfig.ConfigValue("Port")), SecureSocketOptions.Auto);
+                smtpClient.Authenticate(CommonConfig.ConfigValue("email"), CommonConfig.ConfigValue("emailpassword"));
                 await smtpClient.SendAsync(mime);
                 smtpClient.Disconnect(true);
                 smtpClient.Dispose();

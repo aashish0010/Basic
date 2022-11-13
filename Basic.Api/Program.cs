@@ -1,6 +1,5 @@
 using Basic.Application;
 using Basic.Application.Service;
-using Basic.Domain.Entity;
 using Basic.Domain.Interface;
 using Basic.Infrastracture.Dapper;
 using Basic.Infrastracture.Entity;
@@ -8,11 +7,13 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Configuration;
 using System.Text;
 using System.Text.Json.Serialization;
 
+
+
 var builder = WebApplication.CreateBuilder(args);
+
 
 
 
@@ -61,7 +62,6 @@ builder.Services.AddCors();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
-builder.Services.Configure<EmailConfiguration>(builder.Configuration.GetSection("EmailSettings"));
 
 
 builder.Services.AddAuthentication(x =>
@@ -111,7 +111,7 @@ app.Use(async (context, next) =>
 {
     try
     {
-        
+
         await next.Invoke();
     }
     catch (Exception ex)
