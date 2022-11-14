@@ -1,4 +1,5 @@
-﻿using Basic.Domain.Entity;
+﻿using Basic.Application.Function;
+using Basic.Domain.Entity;
 using Basic.Domain.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -86,19 +87,46 @@ namespace Basic.Api.Controllers
 
         }
 
-        [Route("~/api/user/userdetail")]
+
+
+
+
+        [Route("~/api/user/gettoken")]
         [HttpGet]
-        public async Task<IActionResult> GenerateForgetToken(string email)
+        public async Task<IActionResult> GenerateForgetToken(string username, string email, string link)
         {
             var data = await _unitOfWork.ForgetPasswordService.GenerateForgetProcessid(email);
             if (data.Code == 200)
             {
                 EmailMessage ema = new EmailMessage();
-                ema.EmailToName = email;
-                ema.EmailBody = "";
+                ema.EmailToName = username;
+                ema.EmailBody = $@"
+                    <p style=""font-size: 180%"">Dear {username}</p>
+                    <br>
+                    <br>
+                    <hr>
+                    <b style=""margin-left:150px; font-size:110%"">A request has been received to change the password for your account</b>
+                    <br>
+                    <br>
+                    <button href=""facebook.com/{data.Message}/{NormalFunctions.encrypt(email)}"" style=""margin-left:250px;background-color: #4CAF50;
+                      border: none;
+                      color: white;
+                      padding: 15px 32px;
+                      text-align: center;
+                      text-decoration: none;
+                      display: inline-block;
+                      font-size: 16px;"">Reset Password</button>
+                      <footer style="" text-align: center;margin-top:20px;margin-down:20px;
+                      padding: 3px;
+                      background-color: #e7e9eb;
+                      color: black;"">Token will expire for the 10 min</footer>
+                      <p>Thanks,</p>";
+
                 ema.EmailSubject = "Forget Password";
                 ema.EmailToId = email;
                 await _unitOfWork.emailService.SendEmail(ema);
+
+                data.Message = "Message Send Successfully";
                 return Ok(data);
             }
             return BadRequest(data);
@@ -108,7 +136,7 @@ namespace Basic.Api.Controllers
         [HttpGet]
         public IActionResult PasswordChange(string email, string processid)
         {
-            var data = _unitOfWork.ForgetPasswordService.VerifyUser(email, processid);
+            var data = _unitOfWork.ForgetPasswordService.VerifyUser(NormalFunctions.Decrypt(email), processid);
             if (data.Code == 200)
             {
                 return Ok(data);

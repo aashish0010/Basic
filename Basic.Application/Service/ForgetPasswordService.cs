@@ -14,15 +14,23 @@ namespace Basic.Application.Service
         }
         public async Task<CommonResponse> GenerateForgetProcessid(string email)
         {
-
+            int userid = _context.tbl_user.Where(x => x.Email == email).FirstOrDefault().Userid;
+            if (userid == 0)
+            {
+                return new CommonResponse()
+                {
+                    Code = 400,
+                    Message = "Email Is Not Register"
+                };
+            }
+            var random = NormalFunctions.RandomString(20);
 
             await _context.EmailRequest.AddAsync(new ForgetPassword()
             {
-
-                Userid = 123,
+                Userid = userid,
                 Email = email,
-                Processid = NormalFunctions.RandomString(20),
-                Status = "failed",
+                Processid = random,
+                Status = null,
                 Createdate = DateTime.UtcNow.ToString(),
                 Approvedate = null
             });
@@ -31,7 +39,7 @@ namespace Basic.Application.Service
             return new CommonResponse()
             {
                 Code = 200,
-                Message = "Message Send Successfully"
+                Message = random.ToString()
             };
 
         }
@@ -41,6 +49,15 @@ namespace Basic.Application.Service
             var data = _context.EmailRequest.Where(x => x.Email == email && proccessid == x.Processid);
             if (data.Count() > 0)
             {
+                if (Convert.ToDateTime(data.FirstOrDefault().Createdate).AddMinutes(10) < DateTime.UtcNow)
+                {
+                    return new CommonResponse()
+                    {
+                        Code = 400,
+                        Message = "Token Expired"
+                    };
+                }
+
                 return new CommonResponse()
                 {
                     Code = 200,

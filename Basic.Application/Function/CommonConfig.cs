@@ -8,8 +8,8 @@ namespace Basic.Application.Function
         public static string ConfigValue(string configkey)
         {
             DynamicParameters dynamicParameters = new DynamicParameters();
-            dynamicParameters.Add("@configval", configkey);
-            string sql = "select configvalue from Config where configvalue=@configval";
+            dynamicParameters.Add("@configid", configkey);
+            string sql = "select configvalue from Config where configid=@configid";
             var config = DbHelper.RunQueryDynamicallywithoutasync(sql, dynamicParameters);
             return config.FirstOrDefault().configvalue;
         }

@@ -11,6 +11,6 @@ namespace Basic.Infrastracture.Entity
         }
         public DbSet<ForgetPassword> EmailRequest { get; set; }
         public DbSet<Config> Config { get; set; }
-
+        public DbSet<User> tbl_user { get; set; }
     }
 }
