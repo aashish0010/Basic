@@ -90,16 +90,30 @@ namespace Basic.Api.Controllers
         [HttpGet]
         public async Task<IActionResult> GenerateForgetToken(string email)
         {
-            await _unitOfWork.ForgetPasswordService.GenerateForgetProcessid(email);
-            return Ok();
+            var data = await _unitOfWork.ForgetPasswordService.GenerateForgetProcessid(email);
+            if (data.Code == 200)
+            {
+                EmailMessage ema = new EmailMessage();
+                ema.EmailToName = email;
+                ema.EmailBody = "";
+                ema.EmailSubject = "Forget Password";
+                ema.EmailToId = email;
+                await _unitOfWork.emailService.SendEmail(ema);
+                return Ok(data);
+            }
+            return BadRequest(data);
         }
 
-        [Route("~/api/user/passwordchange")]
+        [Route("~/api/user/verifyforgetpassword")]
         [HttpGet]
-        public async Task<IActionResult> PasswordChange(string email, string processid)
+        public IActionResult PasswordChange(string email, string processid)
         {
-            await _unitOfWork.ForgetPasswordService.VerifyUser(email, processid);
-            return Ok();
+            var data = _unitOfWork.ForgetPasswordService.VerifyUser(email, processid);
+            if (data.Code == 200)
+            {
+                return Ok(data);
+            }
+            return BadRequest(data);
         }
 
     }

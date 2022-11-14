@@ -27,6 +27,7 @@ namespace Basic.Application.Service
                 Approvedate = null
             });
             await _context.SaveChangesAsync();
+
             return new CommonResponse()
             {
                 Code = 200,
@@ -35,9 +36,25 @@ namespace Basic.Application.Service
 
         }
 
-        public Task<CommonResponse> VerifyUser(string email, string proccessid)
+        public CommonResponse VerifyUser(string email, string proccessid)
         {
-            throw new NotImplementedException();
+            var data = _context.EmailRequest.Where(x => x.Email == email && proccessid == x.Processid);
+            if (data.Count() > 0)
+            {
+                return new CommonResponse()
+                {
+                    Code = 200,
+                    Message = "Password Changed Succefullly"
+                };
+            }
+            else
+            {
+                return new CommonResponse()
+                {
+                    Code = 400,
+                    Message = "Request Invalid"
+                };
+            }
         }
     }
 }
