@@ -124,10 +124,22 @@ namespace Basic.Api.Controllers
 
                 ema.EmailSubject = "Forget Password";
                 ema.EmailToId = email;
-                await _unitOfWork.emailService.SendEmail(ema);
+                bool emailres = await _unitOfWork.emailService.SendEmail(ema);
+                if (emailres == true)
+                {
+                    data.Message = "Message Send Successfully";
+                    return Ok(data);
+                }
+                else
+                {
+                    return BadRequest(new CommonResponse()
+                    {
+                        Code = 400,
+                        Message = "Email Send Failed"
+                    });
+                }
 
-                data.Message = "Message Send Successfully";
-                return Ok(data);
+
             }
             return BadRequest(data);
         }
