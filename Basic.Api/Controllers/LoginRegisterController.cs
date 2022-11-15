@@ -54,7 +54,7 @@ namespace Basic.Api.Controllers
             return reftok;
         }
 
-        [Route("~/api/user/refreshtoken")]
+        [Route("~/api/user/gettokenvalues")]
 
         [HttpGet]
         [Authorize]
