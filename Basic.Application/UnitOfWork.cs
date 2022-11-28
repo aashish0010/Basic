@@ -14,7 +14,7 @@ namespace Basic.Application
 
         public LoginRegisterService LoginRegisterService => new LoginRegisterService();
 
-        public DashBoardService dashBoardService => new DashBoardService();
+        public DashBoardService dashBoardService => new DashBoardService(_context);
 
         public ForgetPasswordService ForgetPasswordService => new ForgetPasswordService(_context);
 

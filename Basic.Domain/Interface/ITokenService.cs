@@ -10,7 +10,8 @@ namespace Basic.Domain.Interface
         ClaimsPrincipal GetPrincipalFromExpiredToken(string token);
         string GetDataFromToken(string token);
         string GetSpecificTokenData(string token, string value);
-        bool CheckTokenIsValid(string token);
+        bool CheckTheTokenTime(string token);
+        bool IsTokenValid(string token);
 
     }
 }

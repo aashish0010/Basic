@@ -1,7 +1,6 @@
 ﻿using Basic.Application.Function;
 using Basic.Domain.Entity;
 using Basic.Domain.Interface;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Basic.Api.Controllers
@@ -58,14 +57,12 @@ namespace Basic.Api.Controllers
         }
 
         [HttpGet]
-        [Authorize]
+
         [Route("tokenverifyandrefresh")]
-        public IActionResult TokenVerifyAndRefresh()
+        public IActionResult TokenVerifyAndRefresh(string token)
         {
 
-            var re = Request;
 
-            string token = re.Headers["Authorization"].FirstOrDefault().Split(' ')[1];
             if (token == null)
             {
                 return BadRequest(new CommonResponse
@@ -75,17 +72,37 @@ namespace Basic.Api.Controllers
                 });
             }
 
-            if (_tokenService.CheckTokenIsValid(token) == false)
+            if (_tokenService.IsTokenValid(token) == true)
             {
-                var newtoken = RefreshToken(token);
-                token = newtoken.Token;
+
+                dynamic obj = new
+                {
+                    Token = token
+                };
+                return Ok(obj);
+            }
+            else
+            {
+                if (_tokenService.CheckTheTokenTime(token) == false)
+                {
+                    var newtoken = RefreshToken(token);
+                    token = newtoken.Token;
+                    dynamic obj = new
+                    {
+                        Token = token
+                    };
+                    return Ok(obj);
+                }
+
+                return Unauthorized(new
+                {
+                    code = 201,
+                    message = "Unauthorized User..!!!"
+                });
             }
 
-            dynamic obj = new
-            {
-                CurrentUser = _tokenService.GetDataFromToken(token)
-            };
-            return Ok(obj);
+
+
 
         }
 

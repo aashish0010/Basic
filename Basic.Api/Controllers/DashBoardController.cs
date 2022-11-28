@@ -1,6 +1,4 @@
-﻿
-
-using Basic.Domain.Entity;
+﻿using Basic.Domain.Entity;
 using Basic.Domain.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,16 +11,19 @@ namespace Basic.Api.Controllers
     public class DashBoardController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
-        public DashBoardController(IUnitOfWork unitOfWork)
+        private readonly ITokenService _tokenService;
+        public DashBoardController(IUnitOfWork unitOfWork, ITokenService tokenService)
         {
             _unitOfWork = unitOfWork;
+            _tokenService = tokenService;
         }
         [Route("userinfo")]
         [HttpGet]
+        [Authorize]
 
         public IActionResult UserInfo()
         {
-            var dash = new DashBoard();
+
             var re = Request;
 
             var token = re.Headers["Authorization"].FirstOrDefault().Split(' ')[1];
@@ -34,7 +35,9 @@ namespace Basic.Api.Controllers
                     Message = "token not found"
                 });
             }
-            return Ok("");
+            var data = _unitOfWork.dashBoardService.GetUserClaimsData(token);
+
+            return Ok(data);
 
         }
     }

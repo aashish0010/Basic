@@ -4,6 +4,6 @@ namespace Basic.Domain.Interface
 {
     public interface IDashBoardService
     {
-        Uservalidate GetUserClaimsData(string token);
+        DashBoard GetUserClaimsData(string token);
     }
 }

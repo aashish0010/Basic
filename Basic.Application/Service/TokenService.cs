@@ -70,7 +70,7 @@ namespace Basic.Application.Service
                  new Claim("Role",NormalFunctions.encrypt(role)),
                  new Claim("Isadmin",NormalFunctions.encrypt(isadmin))
               }),
-                Expires = DateTime.Now.AddMinutes(100),
+                Expires = DateTime.Now.AddSeconds(10),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(tokenKey), SecurityAlgorithms.HmacSha256Signature)
             };
             var token = tokenHandler.CreateToken(tokenDescriptor);
@@ -108,10 +108,14 @@ namespace Basic.Application.Service
             return NormalFunctions.Decrypt(jti);
         }
 
-        public bool CheckTokenIsValid(string token)
+        public bool CheckTheTokenTime(string token)
         {
-            var tokenTicks = GetTokenExpirationTime(token);
-            var tokenDate = DateTimeOffset.FromUnixTimeSeconds(tokenTicks).UtcDateTime;
+            var handler = new JwtSecurityTokenHandler();
+            var jwtSecurityToken = handler.ReadJwtToken(token);
+            var tokenExp = jwtSecurityToken.Claims.First(claim => claim.Type.Equals("exp")).Value;
+            var ticks = long.Parse(tokenExp);
+
+            var tokenDate = DateTimeOffset.FromUnixTimeSeconds(ticks).UtcDateTime;
 
             var now = DateTime.Now.ToUniversalTime();
 
@@ -119,13 +123,34 @@ namespace Basic.Application.Service
 
             return valid;
         }
-        public static long GetTokenExpirationTime(string token)
+        public bool IsTokenValid(string token)
         {
-            var handler = new JwtSecurityTokenHandler();
-            var jwtSecurityToken = handler.ReadJwtToken(token);
-            var tokenExp = jwtSecurityToken.Claims.First(claim => claim.Type.Equals("exp")).Value;
-            var ticks = long.Parse(tokenExp);
-            return ticks;
+            var Key = Encoding.UTF8.GetBytes(_configuration["JWT:Key"]);
+
+            var mySecurityKey = new SymmetricSecurityKey(Key);
+            var tokenHandler = new JwtSecurityTokenHandler();
+            try
+            {
+                tokenHandler.ValidateToken(token,
+                new TokenValidationParameters
+                {
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = _configuration["JWT:Key"].ToString(),
+                    ValidAudience = _configuration["JWT:Audience"].ToString(),
+                    IssuerSigningKey = new SymmetricSecurityKey(Key)
+
+                }, out SecurityToken validatedToken);
+            }
+            catch
+            {
+                return false;
+            }
+            return true;
         }
+
+
     }
 }
