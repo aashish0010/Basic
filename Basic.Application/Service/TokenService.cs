@@ -94,6 +94,7 @@ namespace Basic.Application.Service
             var principal = GetPrincipalFromExpiredToken(token);
 
             var username = principal.Identity?.Name;
+
             return username;
         }
         public string GetSpecificTokenData(string token, string value)

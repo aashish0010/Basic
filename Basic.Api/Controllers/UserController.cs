@@ -8,18 +8,19 @@ namespace Basic.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class LoginRegisterController : ControllerBase
+    public class UserController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly ITokenService _tokenService;
 
-        public LoginRegisterController(IUnitOfWork unitOfWork, ITokenService service)
+        public UserController(IUnitOfWork unitOfWork, ITokenService service)
         {
             _tokenService = service;
             _unitOfWork = unitOfWork;
         }
-        [Route("~/api/user/login")]
+
         [HttpPost]
+        [Route("login")]
         public async Task<IActionResult> Login(LoginRequest login)
         {
             var data = await _unitOfWork.LoginRegisterService.Login(login);
@@ -36,8 +37,9 @@ namespace Basic.Api.Controllers
             });
 
         }
-        [Route("~/api/user/register")]
+
         [HttpPost]
+        [Route("register")]
         public async Task<IActionResult> Register(Register Register)
         {
             var data = await _unitOfWork.LoginRegisterService.Register(Register);
@@ -45,7 +47,8 @@ namespace Basic.Api.Controllers
         }
 
         [HttpGet]
-        public Tokens RefreshToken(string token)
+        [Route("refreshtoken")]
+        private Tokens RefreshToken(string token)
         {
             var tokendata = _tokenService.GetPrincipalFromExpiredToken(token);
             string user = tokendata.Identity.Name;
@@ -54,16 +57,15 @@ namespace Basic.Api.Controllers
             return reftok;
         }
 
-        [Route("~/api/user/gettokenvalues")]
-
         [HttpGet]
         [Authorize]
-        public IActionResult GetTokenValues(string roles)
+        [Route("tokenverifyandrefresh")]
+        public IActionResult TokenVerifyAndRefresh()
         {
-            string token = string.Empty;
+
             var re = Request;
 
-            token = re.Headers["Authorization"].FirstOrDefault().Split(' ')[1];
+            string token = re.Headers["Authorization"].FirstOrDefault().Split(' ')[1];
             if (token == null)
             {
                 return BadRequest(new CommonResponse
@@ -81,19 +83,16 @@ namespace Basic.Api.Controllers
 
             dynamic obj = new
             {
-                CurrentUser = _tokenService.GetSpecificTokenData(token, roles)
+                CurrentUser = _tokenService.GetDataFromToken(token)
             };
             return Ok(obj);
 
         }
 
 
-
-
-
-        [Route("~/api/user/gettoken")]
         [HttpGet]
-        public async Task<IActionResult> GenerateForgetToken(string username, string email, string link)
+        [Route("emailforgetpassword")]
+        public async Task<IActionResult> EmailForgetPassword(string username, string email, string link)
         {
             var data = await _unitOfWork.ForgetPasswordService.GenerateForgetProcessid(email);
             if (data.Code == 200)
@@ -105,17 +104,17 @@ namespace Basic.Api.Controllers
                     <br>
                     <br>
                     <hr>
-                    <b style=""margin-left:150px; font-size:110%"">A request has been received to change the password for your account</b>
+                    <b style=""font-size:110%"">A request has been received to change the password for your account</b>
                     <br>
                     <br>
-                    <button href=""facebook.com/{data.Message}/{NormalFunctions.encrypt(email)}"" style=""margin-left:250px;background-color: #4CAF50;
+                    <a href=""{link}/{data.Message}/{NormalFunctions.encrypt(email)}"" style=""margin-left:250px;background-color: #4CAF50;
                       border: none;
                       color: white;
                       padding: 15px 32px;
                       text-align: center;
                       text-decoration: none;
                       display: inline-block;
-                      font-size: 16px;"">Reset Password</button>
+                      font-size: 16px;"">Reset Password</a>
                       <footer style="" text-align: center;margin-top:20px;margin-down:20px;
                       padding: 3px;
                       background-color: #e7e9eb;
@@ -144,9 +143,10 @@ namespace Basic.Api.Controllers
             return BadRequest(data);
         }
 
-        [Route("~/api/user/verifyforgetpassword")]
+
         [HttpGet]
-        public IActionResult PasswordChange(string email, string processid)
+        [Route("verifyforgetpassword")]
+        public IActionResult VerfiyForgetPassword(string email, string processid)
         {
             var data = _unitOfWork.ForgetPasswordService.VerifyUser(NormalFunctions.Decrypt(email), processid);
             if (data.Code == 200)

@@ -34,7 +34,16 @@
     public class User
     {
         public int Userid { get; set; }
-        public string Email { get; set; }
+        public string? Email { get; set; }
+    }
+    public class DashBoard
+    {
+        public string? UserName { get; set; }
+        public string? Email { get; set; }
+        public string? Role { get; set; }
+        public string? IsAdmin { get; set; }
+        public string? Isactive { get; set; }
+        public int UserCount { get; set; }
     }
 
 

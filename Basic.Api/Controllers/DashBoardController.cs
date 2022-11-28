@@ -17,11 +17,12 @@ namespace Basic.Api.Controllers
         {
             _unitOfWork = unitOfWork;
         }
-        [Route("~/api/dashboard/userinfo")]
+        [Route("userinfo")]
         [HttpGet]
 
         public IActionResult UserInfo()
         {
+            var dash = new DashBoard();
             var re = Request;
 
             var token = re.Headers["Authorization"].FirstOrDefault().Split(' ')[1];
@@ -33,9 +34,7 @@ namespace Basic.Api.Controllers
                     Message = "token not found"
                 });
             }
-            var data = _unitOfWork.dashBoardService.GetUserClaimsData(token);
-
-            return Ok(data);
+            return Ok("");
 
         }
     }
