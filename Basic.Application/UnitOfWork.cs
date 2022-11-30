@@ -19,5 +19,7 @@ namespace Basic.Application
         public ForgetPasswordService ForgetPasswordService => new ForgetPasswordService(_context);
 
         public EmailService emailService => new EmailService();
+
+        public RoomDetailsService roomDetailsService => new RoomDetailsService(_context);
     }
 }

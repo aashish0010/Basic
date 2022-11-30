@@ -9,6 +9,7 @@ namespace Basic.Domain.Interface
         public ForgetPasswordService ForgetPasswordService { get; }
 
         public EmailService emailService { get; }
+        public RoomDetailsService roomDetailsService { get; }
 
 
     }
