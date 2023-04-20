@@ -85,6 +85,26 @@ namespace Basic.Infrastracture.Dapper
 
             }
         }
+        public static IEnumerable<T> RunQueryWithModelWithoutasync<T>(string sql, object param = null, string isproc = null)
+        {
+
+            using (var con = Conn())
+            {
+
+                if (isproc == "y")
+                {
+                    var conn = con.Query<T>(sql, param, commandType: CommandType.StoredProcedure);
+                    return conn;
+                }
+                else
+                {
+                    var conn = con.Query<T>(sql, param);
+                    return conn;
+                }
+
+            }
+
+        }
 
     }
 }

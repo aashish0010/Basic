@@ -1,5 +1,4 @@
-﻿using Basic.Domain.Entity;
-using Basic.Domain.Interface;
+﻿using Basic.Domain.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,32 +11,51 @@ namespace Basic.Api.Controllers
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly ITokenService _tokenService;
-        public DashBoardController(IUnitOfWork unitOfWork, ITokenService tokenService)
+        private TokenHandlerController _tokenHandlerController;
+        public DashBoardController(IUnitOfWork unitOfWork, ITokenService tokenService, TokenHandlerController tokenHandlerController)
         {
             _unitOfWork = unitOfWork;
             _tokenService = tokenService;
+            _tokenHandlerController = tokenHandlerController;
         }
-        [Route("userinfo")]
+        [Route("dashboard")]
+        [HttpGet]
+        [Authorize]
+
+        public IActionResult DashBoardDetail()
+        {
+            var userdetail = _tokenHandlerController.GetUserDetail(Request);
+            if (userdetail.common.Code != 200)
+            {
+                return BadRequest(userdetail.common);
+            }
+
+            var imgdetail = _unitOfWork.dashBoardService.GetImage(userdetail.userdetail.UserName, "y");
+            return Ok(new
+            {
+                UserDetail = userdetail.userdetail,
+                ImageDetail = imgdetail
+            });
+
+        }
+        [Route("userdetail")]
         [HttpGet]
         [Authorize]
 
         public IActionResult UserInfo()
         {
 
-            var re = Request;
-
-            var token = re.Headers["Authorization"].FirstOrDefault().Split(' ')[1];
-            if (token == null)
+            var userdetail = _tokenHandlerController.GetUserDetail(Request);
+            if (userdetail.common.Code != 200)
             {
-                return BadRequest(new CommonResponse
-                {
-                    Code = 400,
-                    Message = "token not found"
-                });
+                return BadRequest(userdetail.common);
             }
-            var data = _unitOfWork.dashBoardService.GetUserClaimsData(token);
-
-            return Ok(data);
+            // var imgdetail = _unitOfWork.dashBoardService.GetImage(data.UserName);
+            return Ok(new
+            {
+                UserDetail = userdetail.userdetail,
+                //ImageDetail = imgdetail
+            });
 
         }
     }

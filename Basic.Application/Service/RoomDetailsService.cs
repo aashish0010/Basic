@@ -4,7 +4,7 @@ using Basic.Infrastracture.Entity;
 
 namespace Basic.Application.Service
 {
-    public class RoomDetailsService : IRoomDetailsInterface
+    public class RoomDetailsService : IRoomDetailsService
     {
         private readonly ApplicationDbContext context;
 
@@ -16,6 +16,17 @@ namespace Basic.Application.Service
         {
             context.RoomType.Add(room);
             context.SaveChanges();
+        }
+
+        public dynamic GetRoomType()
+        {
+            var data = context.RoomType.ToList().Select(x => new
+            {
+                x.Description,
+                x.Type,
+                x.Createby
+            });
+            return data;
         }
     }
 }

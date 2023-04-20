@@ -1,6 +1,7 @@
 ﻿using Basic.Application.Function;
 using Basic.Domain.Entity;
 using Basic.Domain.Interface;
+using Basic.Infrastracture.Entity;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
@@ -8,6 +9,11 @@ namespace Basic.Application.Service
 {
     public class EmailService : IEmailService
     {
+        private readonly ApplicationDbContext _context;
+        public EmailService(ApplicationDbContext context)
+        {
+            _context = context;
+        }
 
         public async Task<bool> SendEmail(EmailMessage email)
         {
@@ -28,6 +34,10 @@ namespace Basic.Application.Service
                 await smtpClient.SendAsync(mime);
                 smtpClient.Disconnect(true);
                 smtpClient.Dispose();
+                var emailreq = _context.EmailRequest.FirstOrDefault(x => x.Email == email.EmailToId);
+                emailreq.Status = "Approved";
+                _context.Update(emailreq);
+                _context.SaveChanges();
                 return true;
             }
             catch (Exception ex)

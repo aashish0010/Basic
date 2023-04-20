@@ -6,27 +6,23 @@ namespace Basic.Application.Function
     {
 
 
-        //public override Task OnConnectedAsync()
-        //{
+        public override Task OnConnectedAsync()
+        {
+            //string name = user;
+            Groups.AddToGroupAsync(Context.ConnectionId, "aashish");
+            return base.OnConnectedAsync();
+        }
 
-        //    //connected users
-        //    // Groups.AddToGroupAsync(Context.ConnectionId, "aashish");
-        //    return base.OnConnectedAsync();
-        //}
-        //public override Task OnDisconnectedAsync(Exception exception)
-        //{
-        //    //remove disconnect user
-        //    //Data.DataList.Remove(Context.ConnectionId);
-        //    return base.OnDisconnectedAsync(exception);
-        //}
         public async Task SendMessage(string user, string message)
         {
             await Clients.All.SendAsync("ReceiveMessage", user, message);
         }
         public async Task SendToUser(string user, string receiverConnectionId, string message)
         {
+
             await Clients.Client(receiverConnectionId).SendAsync("ReceiveMessage", user, message);
         }
+
         //here the name is included
         public List<string> GetConnectionId() => new List<string> { Context.ConnectionId, "" };
 

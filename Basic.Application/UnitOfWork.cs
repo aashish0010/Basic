@@ -18,8 +18,14 @@ namespace Basic.Application
 
         public ForgetPasswordService ForgetPasswordService => new ForgetPasswordService(_context);
 
-        public EmailService emailService => new EmailService();
+        public EmailService emailService => new EmailService(_context);
 
         public RoomDetailsService roomDetailsService => new RoomDetailsService(_context);
+
+        public ImageHandlerService imageHandlerService => new ImageHandlerService(_context);
+
+        public CommonService commonService => new CommonService(_context);
+
+        public LocationService locationService => new LocationService();
     }
 }

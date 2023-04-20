@@ -28,6 +28,14 @@ namespace Basic.Api.Controllers
                 Tokens token = _tokenService.GenerateToken(data.FirstOrDefault().Username, data.FirstOrDefault().Email, data.FirstOrDefault().Role, data.FirstOrDefault().Isactive);
                 return Ok(token);
             }
+            if (data == null)
+            {
+                return Unauthorized(new CommonResponse
+                {
+                    Code = 401,
+                    Message = "Unauthorized"
+                });
+            }
 
             return Unauthorized(new CommonResponse
             {
@@ -41,8 +49,35 @@ namespace Basic.Api.Controllers
         [Route("register")]
         public async Task<IActionResult> Register(Register Register)
         {
-            var data = await _unitOfWork.LoginRegisterService.Register(Register);
-            return Ok(data.FirstOrDefault());
+            string interests = string.Empty;
+            int i = 0;
+            if (Register.Interests.Count() > 1)
+            {
+                foreach (var items in Register.Interests)
+                {
+                    if (i == 0)
+                        interests = items;
+
+                    else
+                        interests = interests + "," + items;
+
+                    i++;
+                }
+            }
+            else
+            {
+                interests = Register.Interests.FirstOrDefault();
+            }
+            var data = await _unitOfWork.LoginRegisterService.Register(Register, interests);
+            if (data.FirstOrDefault()?.Code == 0)
+            {
+                Tokens token = _tokenService.GenerateToken(Register.Username, Register.Email, "user", "y");
+                return Ok(token);
+            }
+            else
+                return BadRequest(data.FirstOrDefault());
+
+
         }
 
         [HttpGet]
@@ -61,8 +96,6 @@ namespace Basic.Api.Controllers
         [Route("tokenverifyandrefresh")]
         public IActionResult TokenVerifyAndRefresh(string token)
         {
-
-
             if (token == null)
             {
                 return BadRequest(new CommonResponse
@@ -108,30 +141,23 @@ namespace Basic.Api.Controllers
 
 
         [HttpGet]
-        [Route("emailforgetpassword")]
-        public async Task<IActionResult> EmailForgetPassword(string username, string email, string link)
+        [Route("forgetpasswordrequest")]
+        public async Task<IActionResult> EmailForgetPassword(string email)
         {
             var data = await _unitOfWork.ForgetPasswordService.GenerateForgetProcessid(email);
             if (data.Code == 200)
             {
                 EmailMessage ema = new EmailMessage();
-                ema.EmailToName = username;
-                ema.EmailBody = $@"
-                    <p style=""font-size: 180%"">Dear {username}</p>
+                ema.EmailToName = data.Username;
+                ema.EmailBody = $@"<p style=""font-size: 180%"">Dear {data.Username}</p>
                     <br>
+                    <p style=""text-align: center;color:red;font-size:200%""><b>{data.Otp}</b></p>
                     <br>
                     <hr>
                     <b style=""font-size:110%"">A request has been received to change the password for your account</b>
                     <br>
                     <br>
-                    <a href=""{link}/{data.Message}/{NormalFunctions.encrypt(email)}"" style=""margin-left:250px;background-color: #4CAF50;
-                      border: none;
-                      color: white;
-                      padding: 15px 32px;
-                      text-align: center;
-                      text-decoration: none;
-                      display: inline-block;
-                      font-size: 16px;"">Reset Password</a>
+                   
                       <footer style="" text-align: center;margin-top:20px;margin-down:20px;
                       padding: 3px;
                       background-color: #e7e9eb;
@@ -140,11 +166,18 @@ namespace Basic.Api.Controllers
 
                 ema.EmailSubject = "Forget Password";
                 ema.EmailToId = email;
-                bool emailres = await _unitOfWork.emailService.SendEmail(ema);
+                //bool emailres = await _unitOfWork.emailService.SendEmail(ema);
+                bool emailres = true;
                 if (emailres == true)
                 {
-                    data.Message = "Message Send Successfully";
-                    return Ok(data);
+
+                    return Ok(new
+                    {
+                        Code = 200,
+                        Message = "Otp send succesfully",
+                        Processid = data.ProcessId,
+                        Otp = data.Otp
+                    });
                 }
                 else
                 {
@@ -163,11 +196,12 @@ namespace Basic.Api.Controllers
 
         [HttpGet]
         [Route("verifyforgetpassword")]
-        public IActionResult VerfiyForgetPassword(string email, string processid)
+        public IActionResult VerfiyForgetPassword(VerfiyForgetPassword password)
         {
-            var data = _unitOfWork.ForgetPasswordService.VerifyUser(NormalFunctions.Decrypt(email), processid);
+            var data = _unitOfWork.ForgetPasswordService.VerifyUser(NormalFunctions.Decrypt(password.Processid), password.Processid, password.Otp);
             if (data.Code == 200)
             {
+                _unitOfWork.ForgetPasswordService.ChangePassword(NormalFunctions.Decrypt(password.Processid), password.Password);
                 return Ok(data);
             }
             return BadRequest(data);

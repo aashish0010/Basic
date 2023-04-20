@@ -37,12 +37,14 @@ namespace Basic.Application.Service
 
             var tokenValidationParameters = new TokenValidationParameters
             {
-                ValidateIssuer = false,
-                ValidateAudience = false,
-                ValidateLifetime = false,
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
                 ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(Key),
-                ClockSkew = TimeSpan.Zero
+                ValidIssuer = _configuration["Jwt:Issuer"],
+                ValidAudience = _configuration["Jwt:Audience"],
+                IssuerSigningKey = new SymmetricSecurityKey(Key)
+
             };
 
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -57,25 +59,33 @@ namespace Basic.Application.Service
         public Tokens GenerateJWTTokens(string userName, string email, string role, string isadmin)
         {
 
-
+            var audiance = _configuration["JWT:Audience"];
+            var issuer = _configuration["JWT:Issuer"];
             var tokenHandler = new JwtSecurityTokenHandler();
-            var tokenKey = Encoding.UTF8.GetBytes(_configuration["JWT:Key"]);
-
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = new ClaimsIdentity(new Claim[]
+                Subject = new ClaimsIdentity(new[]
               {
-                 new Claim(ClaimTypes.Name,NormalFunctions.encrypt(userName)),
-                 new Claim("Email",NormalFunctions.encrypt(email)),
-                 new Claim("Role",NormalFunctions.encrypt(role)),
-                 new Claim("Isadmin",NormalFunctions.encrypt(isadmin))
+                  new Claim(ClaimTypes.Name, NormalFunctions.encrypt(userName)),
+                  new Claim("Email", NormalFunctions.encrypt(email)),
+                  new Claim("Role", NormalFunctions.encrypt(role)),
+                  new Claim("Isadmin", NormalFunctions.encrypt(isadmin))
               }),
-                Expires = DateTime.Now.AddSeconds(10),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(tokenKey), SecurityAlgorithms.HmacSha256Signature)
+
+                Audience = audiance,
+                Issuer = issuer,
+                Expires = DateTime.UtcNow.AddDays(1),
+                SigningCredentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256)
             };
             var token = tokenHandler.CreateToken(tokenDescriptor);
             var refreshToken = GenerateRefreshToken();
-            return new Tokens { Token = tokenHandler.WriteToken(token), RefreshToken = refreshToken, UserName = userName };
+            return new Tokens
+            {
+                Token = tokenHandler.WriteToken(token),
+                RefreshToken = refreshToken,
+                UserName = userName
+            };
         }
 
 
@@ -123,6 +133,16 @@ namespace Basic.Application.Service
 
             return valid;
         }
+
+
+        private bool CustomLifetimeValidator(DateTime? notBefore, DateTime? expires, SecurityToken tokenToValidate, TokenValidationParameters @param)
+        {
+            if (expires != null)
+            {
+                return expires > DateTime.UtcNow;
+            }
+            return false;
+        }
         public bool IsTokenValid(string token)
         {
             var Key = Encoding.UTF8.GetBytes(_configuration["JWT:Key"]);
@@ -134,13 +154,14 @@ namespace Basic.Application.Service
                 tokenHandler.ValidateToken(token,
                 new TokenValidationParameters
                 {
-                    ValidateIssuer = false,
-                    ValidateAudience = false,
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
                     ValidIssuer = _configuration["JWT:Key"].ToString(),
                     ValidAudience = _configuration["JWT:Audience"].ToString(),
-                    IssuerSigningKey = new SymmetricSecurityKey(Key)
+                    IssuerSigningKey = new SymmetricSecurityKey(Key),
+                    LifetimeValidator = CustomLifetimeValidator
 
                 }, out SecurityToken validatedToken);
             }

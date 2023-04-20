@@ -1,4 +1,6 @@
+﻿using Basic.Api;
 using Basic.Application;
+using Basic.Application.Function;
 using Basic.Application.Service;
 using Basic.Domain.Interface;
 using Basic.Infrastracture.Dapper;
@@ -16,6 +18,26 @@ var builder = WebApplication.CreateBuilder(args);
 
 
 
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+           .AddJwtBearer(options =>
+           {
+               options.RequireHttpsMetadata = false;
+               options.SaveToken = true;
+               options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+               {
+                   ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                   ValidAudience = builder.Configuration["Jwt:Audience"],
+                   IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
+                   ValidateIssuer = true,
+                   ValidateAudience = true,
+                   ValidateLifetime = false,
+                   ValidateIssuerSigningKey = true
+               };
+           });
+
+builder.Services.AddAuthorization();
+
+
 
 // Add services to the container.
 
@@ -27,7 +49,8 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.DefaultIgnoreCondition
                        = JsonIgnoreCondition.WhenWritingNull;
 
-    });
+
+    }).AddControllersAsServices();
 DbConn.ConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(DbConn.ConnectionString));
 
@@ -59,45 +82,11 @@ builder.Services.AddSwaggerGen(option =>
         }
     });
 });
+builder.Services.AddSignalR();
 builder.Services.AddCors();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
-
-
-builder.Services.AddAuthentication(x =>
-{
-    x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    x.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer(o =>
-{
-    var Key = Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"]);
-    o.RequireHttpsMetadata = false;
-    o.SaveToken = true;
-    o.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = false,
-        ValidateAudience = false,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration["JWT:Issuer"],
-        ValidAudience = builder.Configuration["JWT:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Key)
-    };
-    o.Events = new JwtBearerEvents
-    {
-        OnAuthenticationFailed = context =>
-        {
-            if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
-            {
-                context.Response.Headers.Add("IS-TOKEN-EXPIRED", "true");
-            }
-            return Task.CompletedTask;
-        }
-    };
-});
-
 
 var app = builder.Build();
 
@@ -107,33 +96,16 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-app.Use(async (context, next) =>
-{
-    try
-    {
-
-        await next.Invoke();
-    }
-    catch (Exception ex)
-    {
-        var res = new
-        {
-            code = context.Response.StatusCode,
-            message = ex.Message,
-        };
-        await context.Response.WriteAsJsonAsync(res);
-    }
-});
+app.ConfigureExceptionHandler();
 app.UseCors(x => x
             .AllowAnyOrigin()
             .AllowAnyMethod()
             .AllowAnyHeader());
-
+app.UseStaticFiles();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
-
+app.MapHub<ChatHub>("/chat");
 
 app.MapControllers();
 

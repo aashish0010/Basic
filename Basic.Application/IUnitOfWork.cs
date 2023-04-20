@@ -10,6 +10,9 @@ namespace Basic.Domain.Interface
 
         public EmailService emailService { get; }
         public RoomDetailsService roomDetailsService { get; }
+        public ImageHandlerService imageHandlerService { get; }
+        public CommonService commonService { get; }
+        public LocationService locationService { get; }
 
 
     }

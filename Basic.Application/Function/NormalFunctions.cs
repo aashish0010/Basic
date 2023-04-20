@@ -1,10 +1,25 @@
-﻿using System.Security.Cryptography;
+﻿using Basic.Domain.Entity;
+using CloudinaryDotNet;
+using CloudinaryDotNet.Actions;
+using Microsoft.AspNetCore.Http;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace Basic.Application.Function
 {
     public static class NormalFunctions
     {
+
+        private static bool CustomLifetimeValidator(DateTime? notBefore, DateTime? expires, SecurityToken tokenToValidate, TokenValidationParameters @param)
+        {
+            if (expires != null)
+            {
+                return expires > DateTime.UtcNow;
+            }
+            return false;
+        }
 
         public static string encrypt(string encryptString)
         {
@@ -63,6 +78,53 @@ namespace Basic.Application.Function
             return new string(Enumerable.Repeat(chars, length)
                 .Select(s => s[random.Next(s.Length)]).ToArray());
         }
+
+        public static dynamic CloudImageUpload(IFormFile img)
+        {
+            try
+            {
+                var myAccount = new Account { ApiKey = CommonConfig.ConfigValue("CloudinaryApiKey"), ApiSecret = CommonConfig.ConfigValue("CloudinaryApiSecret"), Cloud = CommonConfig.ConfigValue("CloudinaryCloudName") };
+                Cloudinary _cloudinary = new Cloudinary(myAccount);
+                using (var stream = img.OpenReadStream())
+                {
+                    var uploadparam = new ImageUploadParams()
+                    {
+                        File = new FileDescription(img.FileName, stream),
+                        // Transformation = new Transformation().Width(200).Height(200).Crop("thumb").Gravity("face")
+                    };
+                    var uploadResult = _cloudinary.Upload(uploadparam);
+                    return uploadResult;
+                };
+
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
+
+
+        }
+
+
+
+        public static DashBoard GetUserClaimsData(string token)
+        {
+            var dash = new DashBoard();
+            var jwt = new JwtSecurityTokenHandler().ReadJwtToken(token);
+            dash.UserName = NormalFunctions.Decrypt(jwt.Claims.First(c => c.Type == "unique_name").Value);
+            dash.Email = NormalFunctions.Decrypt(jwt.Claims.First(c => c.Type == "Email").Value);
+            dash.Role = NormalFunctions.Decrypt(jwt.Claims.First(c => c.Type == "Role").Value);
+            dash.Isactive = NormalFunctions.Decrypt(jwt.Claims.First(c => c.Type == "Isadmin").Value);
+            return dash;
+        }
+
+
+        public static double ToRadians(double angle)
+        {
+            return Math.PI * angle / 180.0;
+        }
+
     }
+
 
 }

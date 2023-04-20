@@ -2,8 +2,9 @@
 
 namespace Basic.Domain.Interface
 {
-    public interface IRoomDetailsInterface
+    public interface IRoomDetailsService
     {
         void CreateRoomType(RoomType room);
+        dynamic GetRoomType();
     }
 }

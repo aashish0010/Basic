@@ -4,7 +4,9 @@ namespace Basic.Domain.Interface
 {
     public interface IForgetPasswordService
     {
-        Task<CommonResponse> GenerateForgetProcessid(string email);
-        CommonResponse VerifyUser(string email, string proccessid);
+        Task<CommonResponseOpt> GenerateForgetProcessid(string email);
+        CommonResponse VerifyUser(string email, string proccessid, string otp);
+
+        void ChangePassword(string email, string password);
     }
 }

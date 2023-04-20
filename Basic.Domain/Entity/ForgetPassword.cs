@@ -12,7 +12,7 @@ namespace Basic.Domain.Entity
         public string? Email { get; set; }
         public string? Processid { get; set; }
         public string? Status { get; set; }
-        public string? Createdate { get; set; }
-        public string? Approvedate { get; set; }
+        public DateTime? Createdate { get; set; }
+        public DateTime? Approvedate { get; set; }
     }
 }

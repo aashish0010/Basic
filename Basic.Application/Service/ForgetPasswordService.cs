@@ -1,7 +1,9 @@
 ﻿using Basic.Application.Function;
 using Basic.Domain.Entity;
 using Basic.Domain.Interface;
+using Basic.Infrastracture.Dapper;
 using Basic.Infrastracture.Entity;
+using Dapper;
 
 namespace Basic.Application.Service
 {
@@ -12,44 +14,75 @@ namespace Basic.Application.Service
         {
             _context = context;
         }
-        public async Task<CommonResponse> GenerateForgetProcessid(string email)
+        public async Task<CommonResponseOpt> GenerateForgetProcessid(string email)
         {
-            int userid = _context.tbl_user.Where(x => x.Email == email).FirstOrDefault().Userid;
-            if (userid == 0)
+            var userdata = _context.tbl_user.Where(x => x.Email == email).FirstOrDefault();
+            if (userdata == null)
             {
-                return new CommonResponse()
+                return new CommonResponseOpt()
                 {
                     Code = 400,
                     Message = "Email Is Not Register"
                 };
             }
-            var random = NormalFunctions.RandomString(20);
+            var usercount = _context.OtpManager.Where(x => x.IsValid == "y" && x.IsVerified == null).Count();
+
+            if (usercount > 1)
+            {
+                var data = _context.OtpManager.Where(x => x.Email == userdata.Email && x.IsValid == "y" && x.IsVerified == null);
+                foreach (var items in data)
+                {
+                    items.IsValid = "n";
+                    _context.OtpManager.Update(items);
+                    _context.SaveChanges();
+                }
+            }
+
+
+            var Otpstring = NormalFunctions.RandomString(7);
+
+            var processid = NormalFunctions.encrypt(userdata.Email);
 
             await _context.EmailRequest.AddAsync(new ForgetPassword()
             {
-                Userid = userid,
+                Userid = userdata.Userid,
                 Email = email,
-                Processid = random,
+                Processid = processid,
                 Status = null,
-                Createdate = DateTime.UtcNow.ToString(),
-                Approvedate = null
+                Createdate = DateTime.UtcNow
+
+            });
+            await _context.SaveChangesAsync();
+            await _context.OtpManager.AddAsync(new OtpManager()
+            {
+                Email = email,
+                ProcessId = processid,
+                OtpCode = Otpstring,
+                IsValid = "y",
+                IsVerified = null,
+                CreatedDate = DateTime.UtcNow
             });
             await _context.SaveChangesAsync();
 
-            return new CommonResponse()
+            return new CommonResponseOpt()
             {
                 Code = 200,
-                Message = random.ToString()
+                Message = "Email Send Successfully",
+                ProcessId = processid,
+                Otp = Otpstring,
+                Username = userdata.UserName
             };
 
         }
 
-        public CommonResponse VerifyUser(string email, string proccessid)
+        public CommonResponse VerifyUser(string email, string proccessid, string otp)
         {
-            var data = _context.EmailRequest.Where(x => x.Email == email && proccessid == x.Processid);
+            var data = _context.OtpManager.Where(x => x.Email == email && x.ProcessId == proccessid && x.IsValid == "y"
+            && x.OtpCode == otp);
             if (data.Count() > 0)
             {
-                if (Convert.ToDateTime(data.FirstOrDefault().Createdate).AddMinutes(10) < DateTime.UtcNow)
+                DateTime verifydate = Convert.ToDateTime(data.FirstOrDefault().CreatedDate).AddMinutes(20);
+                if (verifydate < DateTime.UtcNow)
                 {
                     return new CommonResponse()
                     {
@@ -57,12 +90,23 @@ namespace Basic.Application.Service
                         Message = "Token Expired"
                     };
                 }
-
-                return new CommonResponse()
+                else
                 {
-                    Code = 200,
-                    Message = "Password Changed Succefullly"
-                };
+                    data.FirstOrDefault().IsVerified = "y";
+                    data.FirstOrDefault().VerifiedDate = DateTime.UtcNow;
+
+                    _context.OtpManager.Update(data.FirstOrDefault());
+                    _context.SaveChanges();
+
+                    return new CommonResponse()
+                    {
+                        Code = 200,
+                        Message = "Password Changed Succefullly"
+                    };
+
+                }
+
+
             }
             else
             {
@@ -72,6 +116,17 @@ namespace Basic.Application.Service
                     Message = "Request Invalid"
                 };
             }
+        }
+
+
+        public void ChangePassword(string email, string password)
+        {
+            string sql = " update tbl_user set password=pwdencrypt(@password),loginattempt=null,islocked='n' where email=@email";
+            DynamicParameters param = new DynamicParameters();
+            param.Add("@email", email);
+            param.Add("@password", password);
+            DbHelper.Execute(sql, "n", param);
+
         }
     }
 }

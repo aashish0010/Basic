@@ -22,14 +22,34 @@ namespace Basic.Api.Controllers
         [Route("createroomtype")]
         public IActionResult CreateRoomType(RoomtypeDto room)
         {
-            var roomdata = mapper.Map<RoomType>(room);
-            unitOfWork.roomDetailsService.CreateRoomType(roomdata);
-
-            return Ok(new
+            if (room.id != 0)
             {
-                Code = 200,
-                Message = "Added Successfully..!!!"
-            });
+                return Ok(new
+                {
+                    code = 200,
+                    message = "Update Successfully..!!!"
+                });
+            }
+            else
+            {
+                var roomdata = mapper.Map<RoomType>(room);
+                unitOfWork.roomDetailsService.CreateRoomType(roomdata);
+
+                return Ok(new
+                {
+                    Code = 200,
+                    Message = "Added Successfully..!!!"
+                });
+            }
+
         }
+        [HttpPost]
+        [Route("getroomtype")]
+        public IActionResult GetRoomType()
+        {
+            var data = unitOfWork.roomDetailsService.GetRoomType();
+            return Ok(data);
+        }
+
     }
 }

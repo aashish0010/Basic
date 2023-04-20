@@ -9,9 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Basic.Infrastracture", "Bas
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Basic.Application", "Basic.Application\Basic.Application.csproj", "{5D5115A8-EEA7-40A4-BDC7-AC85D933815E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Basic.Test", "Basic.Test\Basic.Test.csproj", "{4D09E5E1-0E62-4EDA-9CE0-ACD0EE34556A}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Basic.Api", "Basic.Api\Basic.Api.csproj", "{5F71B7C4-79BA-431B-9EB4-047EC5CA0F88}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Basic.Api", "Basic.Api\Basic.Api.csproj", "{5F71B7C4-79BA-431B-9EB4-047EC5CA0F88}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -31,10 +29,6 @@ Global
 		{5D5115A8-EEA7-40A4-BDC7-AC85D933815E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5D5115A8-EEA7-40A4-BDC7-AC85D933815E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5D5115A8-EEA7-40A4-BDC7-AC85D933815E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{4D09E5E1-0E62-4EDA-9CE0-ACD0EE34556A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4D09E5E1-0E62-4EDA-9CE0-ACD0EE34556A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4D09E5E1-0E62-4EDA-9CE0-ACD0EE34556A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4D09E5E1-0E62-4EDA-9CE0-ACD0EE34556A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{5F71B7C4-79BA-431B-9EB4-047EC5CA0F88}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{5F71B7C4-79BA-431B-9EB4-047EC5CA0F88}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5F71B7C4-79BA-431B-9EB4-047EC5CA0F88}.Release|Any CPU.ActiveCfg = Release|Any CPU

@@ -22,7 +22,7 @@ namespace Basic.Application.Service
 
         }
 
-        public async Task<IEnumerable<CommonResponse>> Register(Register reg)
+        public async Task<IEnumerable<CommonResponse>> Register(Register reg, string interest)
         {
             var uval = new Uservalidate();
             var sql = "sp_user";
@@ -34,8 +34,12 @@ namespace Basic.Application.Service
             param.Add("@middlename", reg.MiddleName);
             param.Add("@lastname", reg.LastName);
             param.Add("@phonenum", reg.PhoneNumber);
+            param.Add("@dob", reg.DateOfBirth);
+            param.Add("@gender", reg.Gender);
+            param.Add("@bio", interest);
             param.Add("@flag", "Register");
             var regval = await DbHelper.RunQueryWithModel<CommonResponse>(sql, param, "y");
+
             return regval;
         }
 
